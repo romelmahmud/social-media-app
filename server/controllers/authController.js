@@ -1,5 +1,7 @@
 const User = require("../models/User");
 const asyncHandler = require("express-async-handler");
+const bcrypt = require("bcrypt");
+const { Router } = require("express");
 
 // Register user
 const registerUser = asyncHandler(async (req, res) => {
@@ -17,12 +19,18 @@ const registerUser = asyncHandler(async (req, res) => {
     throw new Error("User already exits!!");
   }
 
+  // Hashing Password
+  const salt = await bcrypt.genSalt(10);
+  const hashedPassword = await bcrypt.hash(password, salt);
+
+  // Creating new user
   const newUser = new User({
     username,
     email,
-    password,
+    password: hashedPassword,
   });
 
+  // save user and return response
   if (newUser) {
     const user = await newUser.save();
     res.status(200).json(user);
@@ -32,4 +40,25 @@ const registerUser = asyncHandler(async (req, res) => {
   }
 });
 
-module.exports = { registerUser };
+// Login User
+const loginUser = asyncHandler(async (req, res) => {
+  const { email, password } = req.body;
+
+  // Checking user exits
+  const user = await User.findOne({ email });
+  if (!user) {
+    res.status(404);
+    throw new Error("Wrong credentials");
+  }
+
+  // Password Validation
+  const validPassword = await bcrypt.compare(password, user.password);
+
+  if (!validPassword) {
+    res.status(404);
+    throw new Error("Wrong credentials");
+  }
+  res.status(200).json(user);
+});
+
+module.exports = { registerUser, loginUser };
