@@ -1,7 +1,6 @@
 const User = require("../models/User");
 const asyncHandler = require("express-async-handler");
 const bcrypt = require("bcrypt");
-const { Router } = require("express");
 
 // Register user
 const registerUser = asyncHandler(async (req, res) => {
